@@ -66,3 +66,22 @@ def test_single_axis_fast_path_matches_reference():
     out1 = apply_bnrpe_batch(X, P_axis1, params)
     ref1 = ref_apply(X, P_axis1)
     assert jnp.allclose(out1, ref1, atol=1e-5, rtol=1e-5)
+
+
+def test_two_axis_fast_path_matches_reference():
+    params = init_params(jax.random.PRNGKey(9), d=16, r=4, n_axes=2, alpha=0.3)
+    X = jax.random.normal(jax.random.PRNGKey(10), (6, 16))
+
+    t = jnp.arange(6, dtype=jnp.float32)
+    P = jnp.stack([t, 0.5 * t + 1.0 + 0.25 * jnp.sin(t * 0.5)], axis=-1)
+
+    def ref_apply(X_, P_):
+        def one(x, p):
+            Ucat, Acat = generator_lowrank(p, params)
+            return _apply_cayley_lowrank(x, Ucat, Acat)
+
+        return jax.vmap(one)(X_, P_)
+
+    out = apply_bnrpe_batch(X, P, params)
+    ref = ref_apply(X, P)
+    assert jnp.allclose(out, ref, atol=1e-5, rtol=1e-5)

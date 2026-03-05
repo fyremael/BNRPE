@@ -28,7 +28,7 @@ jobs:
           python -m pip install -r requirements.txt pytest
 
       - name: Run CI validation suite
-        run: python scripts/run_validation_suite.py --mode ci --output-root artifacts_ci
+        run: python scripts/run_validation_suite.py --mode ci --with-sweep --output-root artifacts_ci
 
       - name: Upload CI artifacts
         uses: actions/upload-artifact@v4

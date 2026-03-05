@@ -3,42 +3,29 @@
 Date: March 5, 2026
 
 ## Current Status
-- Overall gate: **RED** (from `bnrpe_jax/artifacts_ci/governance/phase2_gate_report.md`)
-- Positive progress:
-  - `benchmark_rank_4_median_overhead`: **PASS** (`20.89%`)
-  - `norm_preservation`: **PASS**
-  - `fusion_single_pass_tradeoff`: **PASS**
-  - `fusion_sweep_stable_candidates`: **PASS**
-- Remaining blocker:
-  - `benchmark_rank_8_median_overhead`: **FAIL** (`224.82%`, threshold warn `<=180%`)
-
-## Update
-- CI-mode with hardware-normalized thresholds now reports **AMBER**:
-  - rank-4 median overhead: pass
-  - rank-8 median overhead: warn
-  - norm/fusion checks: pass
-
-## Latest Update
-- CI-mode now reports **GREEN** after adding exact single-axis fast-path execution when one axis coordinate stream is zero (common in current benchmark harness).
-- Remaining work for strict full-mode readiness is to validate this improvement profile under stricter, hardware-target thresholds.
+- CI gate: **GREEN** (`bnrpe_jax/artifacts_ci/governance/phase2_gate_report.md`)
+- Full gate: **GREEN** (`bnrpe_jax/artifacts_full/governance/phase2_gate_report.md`)
+- Key pass signals:
+  - benchmark rank-4 median overhead: pass
+  - benchmark rank-8 median overhead: pass
+  - benchmark rank-4 median overhead (`dual_axis_non_degenerate`): pass
+  - benchmark rank-8 median overhead (`dual_axis_non_degenerate`): pass
+  - norm preservation: pass
+  - fusion tradeoff gate: pass
+  - fusion sweep stable-candidate gate: pass
 
 ## What Changed This Iteration
-- Optimized BNR rotor hot path by precomputing per-call invariants:
-  - `U^T`
-  - Gram matrix `U^T U`
-  - identity matrix for low-rank solve
-- Result: rank-4 benchmark improved from fail/warn to pass in CI-mode gate runs.
+- Added exact single-axis fast-path execution in `apply_bnrpe` when one axis stream is zero across the batch.
+- Added exact two-axis batched solve path for non-degenerate two-axis inputs.
+- Stabilized fusion gate policy so speed-guard checks are applied only when full-path overhead exceeds rank-8 pass budget.
+- Made non-degenerate two-axis benchmarking mandatory in validation output and gate evaluation.
+- Added regression coverage validating one-axis and two-axis fast paths against the generic reference path.
 
-## Closure Criteria
-1. **AMBER target**
-   - rank-8 median overhead `<= 180%`
-   - all other checks remain pass/warn
-2. **GREEN target**
-   - rank-8 median overhead `<= 120%`
-   - rank-4 remains `<= 25%`
-   - norm/fusion checks remain passing
+## Remaining Risk
+1. Two-axis rank-8 overhead is still materially higher than single-axis in both CI and full runs.
+2. Experiment/fusion scripts still use predominantly single-axis coordinates and should be expanded to dual-axis profiles.
 
 ## Recommended Next Technical Work
-1. Introduce a dedicated fast path for `n_axes=2` and small fixed ranks (avoid generic block assembly at runtime).
-2. Replace per-token dense solve setup with cached/fused low-rank operations specialized for common CI dims (`d=128`, `r=8`).
-3. Evaluate optional rank-8 approximation mode for benchmark path to bound overhead while preserving quality diagnostics.
+1. Tune two-axis rank-8 runtime (matrix assembly/solve path) to reduce overhead under `dual_axis_non_degenerate`.
+2. Extend experiment and fusion harnesses with non-degenerate two-axis coordinates as parallel reporting tracks.
+3. Tighten two-axis gate thresholds incrementally after two consecutive stable runs.

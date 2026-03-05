@@ -40,6 +40,15 @@ def main() -> None:
     parser.add_argument("--max-r4-overhead-warn", type=float, default=40.0)
     parser.add_argument("--max-r8-overhead-pass", type=float, default=120.0)
     parser.add_argument("--max-r8-overhead-warn", type=float, default=180.0)
+    parser.add_argument("--max-r4-overhead-pass-two-axis", type=float, default=120.0)
+    parser.add_argument("--max-r4-overhead-warn-two-axis", type=float, default=180.0)
+    parser.add_argument("--max-r8-overhead-pass-two-axis", type=float, default=240.0)
+    parser.add_argument("--max-r8-overhead-warn-two-axis", type=float, default=320.0)
+    parser.add_argument(
+        "--required-benchmark-profile",
+        default="dual_axis_non_degenerate",
+        help="Benchmark position_profile that must be present and gated for readiness.",
+    )
     parser.add_argument("--max-norm-err-pass", type=float, default=1e-4)
     parser.add_argument("--max-norm-err-warn", type=float, default=1e-3)
     parser.add_argument("--fusion-rel-margin-pass", type=float, default=0.01)
@@ -53,15 +62,20 @@ def main() -> None:
 
     bench_rows = load_csv_rows(Path(args.bench_csv))
     by_rank: dict[int, list[float]] = {}
+    by_rank_profile: dict[tuple[int, str], list[float]] = {}
     for row in bench_rows:
         rank = int(row["rank"])
-        by_rank.setdefault(rank, []).append(float(row["overhead_pct"]))
+        profile = row.get("position_profile", "")
+        overhead = float(row["overhead_pct"])
+        by_rank.setdefault(rank, []).append(overhead)
+        by_rank_profile.setdefault((rank, profile), []).append(overhead)
 
     for rank, pass_lim, warn_lim in [
         (4, args.max_r4_overhead_pass, args.max_r4_overhead_warn),
         (8, args.max_r8_overhead_pass, args.max_r8_overhead_warn),
     ]:
-        vals = by_rank.get(rank, [])
+        # Keep historical check anchored to the single-axis profile when available.
+        vals = by_rank_profile.get((rank, "single_axis"), by_rank.get(rank, []))
         if not vals:
             checks.append(GateCheck(name=f"benchmark_rank_{rank}_median_overhead", status="fail", detail="missing rank data"))
             continue
@@ -71,7 +85,34 @@ def main() -> None:
             GateCheck(
                 name=f"benchmark_rank_{rank}_median_overhead",
                 status=status,
-                detail=f"median_overhead_pct={med:.2f}, pass<={pass_lim:.2f}, warn<={warn_lim:.2f}",
+                detail=f"median_overhead_pct={med:.2f}, profile=single_axis_or_all, pass<={pass_lim:.2f}, warn<={warn_lim:.2f}",
+            )
+        )
+
+    for rank, pass_lim, warn_lim in [
+        (4, args.max_r4_overhead_pass_two_axis, args.max_r4_overhead_warn_two_axis),
+        (8, args.max_r8_overhead_pass_two_axis, args.max_r8_overhead_warn_two_axis),
+    ]:
+        vals = by_rank_profile.get((rank, args.required_benchmark_profile), [])
+        if not vals:
+            checks.append(
+                GateCheck(
+                    name=f"benchmark_rank_{rank}_median_overhead_{args.required_benchmark_profile}",
+                    status="fail",
+                    detail=f"missing required position_profile={args.required_benchmark_profile}",
+                )
+            )
+            continue
+        med = median(vals)
+        status = gate_status(med, pass_lim, warn_lim)
+        checks.append(
+            GateCheck(
+                name=f"benchmark_rank_{rank}_median_overhead_{args.required_benchmark_profile}",
+                status=status,
+                detail=(
+                    f"median_overhead_pct={med:.2f}, profile={args.required_benchmark_profile}, "
+                    f"pass<={pass_lim:.2f}, warn<={warn_lim:.2f}"
+                ),
             )
         )
 

@@ -23,7 +23,14 @@ def main() -> None:
     output_root = Path(args.output_root)
 
     run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"], cwd=repo_root)
-    bench_cmd = [sys.executable, "scripts/benchmark_overhead.py", "--output-dir", str(output_root / "benchmarks")]
+    bench_cmd = [
+        sys.executable,
+        "scripts/benchmark_overhead.py",
+        "--position-profiles",
+        "single_axis,dual_axis_non_degenerate",
+        "--output-dir",
+        str(output_root / "benchmarks"),
+    ]
     exp_cmd = [sys.executable, "scripts/run_experiment_tables.py", "--output-dir", str(output_root / "experiments")]
     fusion_cmd = [sys.executable, "scripts/prototype_fused_paths.py", "--output-dir", str(output_root / "fusion")]
     if args.mode == "ci":
@@ -73,6 +80,14 @@ def main() -> None:
                 "240",
                 "--max-r8-overhead-warn",
                 "300",
+                "--max-r4-overhead-pass-two-axis",
+                "120",
+                "--max-r4-overhead-warn-two-axis",
+                "180",
+                "--max-r8-overhead-pass-two-axis",
+                "240",
+                "--max-r8-overhead-warn-two-axis",
+                "320",
             ]
             if args.mode == "ci"
             else []
