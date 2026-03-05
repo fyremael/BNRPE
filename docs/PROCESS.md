@@ -27,3 +27,4 @@ This repository is Git-backed as of March 4, 2026.
    - relative-offset drift diagnostic
 4. Gate policy:
    - consume `phase2_gate_report.md` as RED/AMBER/GREEN decision signal
+   - CI mode applies CPU-normalized overhead thresholds; full mode uses stricter readiness thresholds

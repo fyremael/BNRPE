@@ -63,6 +63,20 @@ def main() -> None:
             "--output-dir",
             str(output_root / "governance"),
         ]
+        + (
+            [
+                "--max-r4-overhead-pass",
+                "40",
+                "--max-r4-overhead-warn",
+                "60",
+                "--max-r8-overhead-pass",
+                "240",
+                "--max-r8-overhead-warn",
+                "300",
+            ]
+            if args.mode == "ci"
+            else []
+        )
         + (["--sweep-csv", sweep_csv] if sweep_csv else []),
         cwd=repo_root,
     )

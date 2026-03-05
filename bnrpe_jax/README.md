@@ -43,6 +43,7 @@ python scripts/run_validation_suite.py --mode ci --output-root artifacts_ci
 
 Outputs include a gate report at:
 - `artifacts/governance/phase2_gate_report.md` (or `artifacts_ci/governance/...` in CI mode)
+- CI mode uses CPU-normalized overhead thresholds for gate evaluation; full mode keeps stricter default thresholds.
 
 ## Key ideas
 - Generators per axis: A_a = U_a * skew(M_a) * U_a^T (low rank r)

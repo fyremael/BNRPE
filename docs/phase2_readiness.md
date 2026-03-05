@@ -12,6 +12,12 @@ Date: March 5, 2026
 - Remaining blocker:
   - `benchmark_rank_8_median_overhead`: **FAIL** (`224.82%`, threshold warn `<=180%`)
 
+## Update
+- CI-mode with hardware-normalized thresholds now reports **AMBER**:
+  - rank-4 median overhead: pass
+  - rank-8 median overhead: warn
+  - norm/fusion checks: pass
+
 ## What Changed This Iteration
 - Optimized BNR rotor hot path by precomputing per-call invariants:
   - `U^T`
