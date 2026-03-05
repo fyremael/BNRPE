@@ -44,3 +44,15 @@ That pattern supports a viable research hypothesis: current cost is dominated by
 1. Focus kernel-level optimization on low-`d`/rank-8 regimes (`d=64,128`) where overhead is worst.
 2. Keep reporting split by `(d, L, r)` to avoid averaging away regime behavior.
 3. Re-run the same matrix command after each optimization to quantify true movement in medians and worst-case tails.
+
+## Evaluation Protocol (Level-Up)
+Use matrix-vs-matrix comparison as a hard acceptance filter for optimization attempts:
+
+```bash
+python bnrpe_jax/scripts/compare_research_matrices.py --baseline-json bnrpe_jax/artifacts_ci/research_matrix_dual_axis/summary.json --candidate-json bnrpe_jax/artifacts_ci/research_matrix_dual_axis_opt3/summary.json --output-dir bnrpe_jax/artifacts_ci/research_compare_opt3
+```
+
+Current comparison result:
+- Verdict: `REJECT`
+- Reason: low-`d` rank-8 improved, but overall rank medians regressed.
+- Evidence: `bnrpe_jax/artifacts_ci/research_compare_opt3/comparison.md`

@@ -44,6 +44,13 @@ Outputs:
 - `artifacts/research_matrix/matrix_results.csv`
 - `artifacts/research_matrix/summary.{json,md}`
 
+Matrix comparison command:
+```bash
+python scripts/compare_research_matrices.py --baseline-json artifacts/research_matrix_baseline/summary.json --candidate-json artifacts/research_matrix_candidate/summary.json --output-dir artifacts/research_compare
+```
+Outputs:
+- `artifacts/research_compare/comparison.{json,md}`
+
 ## CI mode (fast)
 ```bash
 python scripts/run_validation_suite.py --mode ci --output-root artifacts_ci
