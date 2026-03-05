@@ -6,6 +6,31 @@ import jax.numpy as jnp
 
 from .params import BNRPEParams, skew
 
+
+def _apply_bnrpe_oneaxis_flat(
+    x_flat: jnp.ndarray,
+    coeff: jnp.ndarray,
+    U: jnp.ndarray,
+    M_skew: jnp.ndarray,
+) -> jnp.ndarray:
+    # Exact single-axis Cayley path (r x r solve), vectorized over tokens.
+    Ut = U.T
+    Gram = Ut @ U
+    MG = M_skew @ Gram
+    c = 0.5 * coeff  # (L,)
+    c_col = c[:, None]
+
+    u = x_flat @ U
+    y = x_flat + ((u @ M_skew.T) * c_col) @ Ut
+    v = y @ U
+    rhs = (v @ M_skew.T) * c_col
+
+    eye = jnp.eye(U.shape[1], dtype=x_flat.dtype)[None, :, :]
+    M = eye - c[:, None, None] * MG[None, :, :]
+    z = jnp.linalg.solve(M, rhs[..., None])[..., 0]
+    return y + z @ Ut
+
+
 def _apply_cayley_lowrank(
     v: jnp.ndarray,
     U: jnp.ndarray,
@@ -99,15 +124,42 @@ def apply_bnrpe(x: jnp.ndarray, P: jnp.ndarray, params: BNRPEParams) -> jnp.ndar
     eye_r = jnp.eye(Gram.shape[0], dtype=Gram.dtype)
     M_skew = 0.5 * (params.M_raw - jnp.swapaxes(params.M_raw, -1, -2))  # (n_axes, r, r)
     axis_eye = jnp.eye(n_axes, dtype=x.dtype)
+    coeff_all = params.alpha * params.axis_scale[None, :] * p_flat  # (L, n_axes)
 
-    def _apply_one(x1, P1):
-        coeff = params.alpha * params.axis_scale * P1  # (n_axes,)
+    if n_axes == 2:
+        axis0_all_zero = jnp.all(coeff_all[:, 0] == 0.0)
+        axis1_all_zero = jnp.all(coeff_all[:, 1] == 0.0)
+
+        def _only_axis0(_):
+            return _apply_bnrpe_oneaxis_flat(x_flat, coeff_all[:, 0], params.U[0], M_skew[0])
+
+        def _only_axis1(_):
+            return _apply_bnrpe_oneaxis_flat(x_flat, coeff_all[:, 1], params.U[1], M_skew[1])
+
+        def _general(_):
+            def _apply_one(x1, coeff1):
+                # Scaled axis blocks followed by vectorized block-diagonal assembly.
+                blocks = M_skew * coeff1[:, None, None]  # (n_axes, r, r)
+                Acat = jnp.einsum("ab,bij->aibj", axis_eye, blocks).reshape((n_axes * M_skew.shape[1], n_axes * M_skew.shape[2]))
+                return _apply_cayley_lowrank(x1, Ucat, Acat, Ut=Ut, Gram=Gram, eye_r=eye_r)
+
+            return jax.vmap(_apply_one)(x_flat, coeff_all)
+
+        x_rot_flat = jax.lax.cond(
+            axis1_all_zero,
+            _only_axis0,
+            lambda _: jax.lax.cond(axis0_all_zero, _only_axis1, _general, operand=None),
+            operand=None,
+        )
+        return x_rot_flat.reshape(x.shape)
+
+    def _apply_one(x1, coeff):
         # Scaled axis blocks followed by vectorized block-diagonal assembly.
         blocks = M_skew * coeff[:, None, None]  # (n_axes, r, r)
         Acat = jnp.einsum("ab,bij->aibj", axis_eye, blocks).reshape((n_axes * M_skew.shape[1], n_axes * M_skew.shape[2]))
         return _apply_cayley_lowrank(x1, Ucat, Acat, Ut=Ut, Gram=Gram, eye_r=eye_r)
 
-    x_rot_flat = jax.vmap(_apply_one)(x_flat, p_flat)
+    x_rot_flat = jax.vmap(_apply_one)(x_flat, coeff_all)
     return x_rot_flat.reshape(x.shape)
 
 def apply_bnrpe_batch(X: jnp.ndarray, P: jnp.ndarray, params: BNRPEParams) -> jnp.ndarray:

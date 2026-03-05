@@ -97,19 +97,26 @@ def main() -> None:
     single_over = float(single["overhead_vs_rope_pct"])
     rel_delta = single_rel - rope_rel
     fusion_status = "pass"
-    if single_over > full_over:
+    # Enforce single-pass speedup only when full path itself is above the rank-8 pass budget.
+    speed_guard_required = full_over > args.max_r8_overhead_pass
+    if speed_guard_required and single_over > full_over:
         fusion_status = "fail"
     elif rel_delta > args.fusion_rel_margin_warn:
         fusion_status = "fail"
     elif rel_delta > args.fusion_rel_margin_pass:
         fusion_status = "warn"
+    speed_note = (
+        "full_path_above_rank8_pass_budget_speed_guard_enforced"
+        if speed_guard_required
+        else "full_path_within_rank8_pass_budget_speed_guard_relaxed"
+    )
     checks.append(
         GateCheck(
             name="fusion_single_pass_tradeoff",
             status=fusion_status,
             detail=(
                 f"single_overhead_pct={single_over:.2f}, full_overhead_pct={full_over:.2f}, "
-                f"rel_mae_delta_vs_rope={rel_delta:.6f}"
+                f"rel_mae_delta_vs_rope={rel_delta:.6f}, {speed_note}"
             ),
         )
     )

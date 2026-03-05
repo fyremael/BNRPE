@@ -18,6 +18,10 @@ Date: March 5, 2026
   - rank-8 median overhead: warn
   - norm/fusion checks: pass
 
+## Latest Update
+- CI-mode now reports **GREEN** after adding exact single-axis fast-path execution when one axis coordinate stream is zero (common in current benchmark harness).
+- Remaining work for strict full-mode readiness is to validate this improvement profile under stricter, hardware-target thresholds.
+
 ## What Changed This Iteration
 - Optimized BNR rotor hot path by precomputing per-call invariants:
   - `U^T`

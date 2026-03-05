@@ -3,7 +3,7 @@ import jax.numpy as jnp
 
 from bnrpe.params import init_params, skew
 from bnrpe.regularizers import _lowrank_commutator_fro2
-from bnrpe.rotors import apply_bnrpe, apply_bnrpe_batch
+from bnrpe.rotors import _apply_cayley_lowrank, apply_bnrpe, apply_bnrpe_batch, generator_lowrank
 
 
 def test_apply_bnrpe_supports_general_leading_dims():
@@ -42,3 +42,27 @@ def test_lowrank_commutator_matches_dense_reference():
         rel_errors.append(rel)
 
     assert max(rel_errors) < 1e-4
+
+
+def test_single_axis_fast_path_matches_reference():
+    params = init_params(jax.random.PRNGKey(7), d=16, r=4, n_axes=2, alpha=0.3)
+    X = jax.random.normal(jax.random.PRNGKey(8), (6, 16))
+
+    t = jnp.arange(6, dtype=jnp.float32)
+    P_axis0 = jnp.stack([t, jnp.zeros_like(t)], axis=-1)
+    P_axis1 = jnp.stack([jnp.zeros_like(t), t], axis=-1)
+
+    def ref_apply(X_, P_):
+        def one(x, p):
+            Ucat, Acat = generator_lowrank(p, params)
+            return _apply_cayley_lowrank(x, Ucat, Acat)
+
+        return jax.vmap(one)(X_, P_)
+
+    out0 = apply_bnrpe_batch(X, P_axis0, params)
+    ref0 = ref_apply(X, P_axis0)
+    assert jnp.allclose(out0, ref0, atol=1e-5, rtol=1e-5)
+
+    out1 = apply_bnrpe_batch(X, P_axis1, params)
+    ref1 = ref_apply(X, P_axis1)
+    assert jnp.allclose(out1, ref1, atol=1e-5, rtol=1e-5)
