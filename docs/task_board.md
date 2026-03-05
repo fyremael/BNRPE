@@ -11,12 +11,12 @@ Date: March 5, 2026
 - Phase 2 operationalization:
   - CI validation workflow on `main`/PR.
   - Governance gate report generation.
-  - Hybrid single-pass tradeoff tuning.
+  - Rank-8 overhead reduction to clear gate from RED to AMBER.
 
 ## Blockers
 - None currently.
 
 ## Next 1-3 Actions
-1. Run CI-mode validation locally and confirm gate report generation.
-2. Tune stable single-pass hybrid candidates against stricter quality targets.
-3. Use gate outputs to define release readiness threshold values with leadership.
+1. Implement rank-8 focused rotor fast path and re-run CI gate.
+2. Re-baseline threshold discussion with leadership after next optimization pass.
+3. Keep fusion sweep recommendation artifacts updated per run.
