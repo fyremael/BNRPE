@@ -51,6 +51,14 @@ python scripts/compare_research_matrices.py --baseline-json artifacts/research_m
 Outputs:
 - `artifacts/research_compare/comparison.{json,md}`
 
+Showcase visual pack command:
+```bash
+python scripts/build_research_showcase.py --output-dir artifacts/showcase_latest
+```
+Outputs:
+- `artifacts/showcase_latest/index.md`
+- `artifacts/showcase_latest/assets/*.svg`
+
 ## CI mode (fast)
 ```bash
 python scripts/run_validation_suite.py --mode ci --output-root artifacts_ci
