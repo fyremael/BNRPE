@@ -68,6 +68,30 @@ Outputs include a gate report at:
 - `artifacts/governance/phase2_gate_report.md` (or `artifacts_ci/governance/...` in CI mode)
 - CI mode uses CPU-normalized overhead thresholds for gate evaluation; full mode keeps stricter default thresholds.
 
+## Documentation (auto-updating)
+Install docs dependencies:
+```bash
+python -m pip install -r requirements-docs.txt
+```
+
+Generate API/context docs and build the site:
+```bash
+python scripts/build_docs.py --repo-root ..
+```
+
+Serve docs locally:
+```bash
+python -m mkdocs serve --config-file ../mkdocs.yml
+```
+
+Publish behavior:
+- `.github/workflows/docs.yml` regenerates docs and builds site on PR/push.
+- Pushes to `main` deploy the built `site/` to GitHub Pages.
+
+Generated docs files:
+- `../docs/api/*.md` (source-introspected API reference)
+- `../docs/context_snapshot.md` (artifact-driven context snapshot)
+
 ## Key ideas
 - Generators per axis: A_a = U_a * skew(M_a) * U_a^T (low rank r)
 - Rotor map: Cayley(G(P)) for exact orthogonality (norm-preserving)

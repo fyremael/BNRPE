@@ -1,3 +1,5 @@
+"""Rotor construction and application routines for BNR-PE."""
+
 from __future__ import annotations
 from typing import Tuple
 
@@ -13,6 +15,7 @@ def _apply_bnrpe_oneaxis_flat(
     U: jnp.ndarray,
     M_skew: jnp.ndarray,
 ) -> jnp.ndarray:
+    """Exact single-axis Cayley path for flattened batches."""
     # Exact single-axis Cayley path (r x r solve), vectorized over tokens.
     Ut = U.T
     Gram = Ut @ U
@@ -40,6 +43,7 @@ def _apply_bnrpe_twoaxis_flat(
     M0_skew: jnp.ndarray,
     M1_skew: jnp.ndarray,
 ) -> jnp.ndarray:
+    """Exact two-axis Cayley path with batched direct ``(2r x 2r)`` solves."""
     # Exact two-axis Cayley path with batched direct solve on (2r x 2r) blocks.
     r = U0.shape[1]
     c0 = 0.5 * coeff0
@@ -129,8 +133,8 @@ def generator_lowrank(P: jnp.ndarray, params: BNRPEParams) -> Tuple[jnp.ndarray,
     as Ucat, Acat where G(P) = Ucat Acat Ucat^T, with Acat block-diagonal (n_axes*r × n_axes*r).
 
     Returns:
-      Ucat: (d, n_axes*r)
-      Acat: (n_axes*r, n_axes*r) skew
+      Ucat: ``(d, n_axes*r)`` concatenated low-rank basis.
+      Acat: ``(n_axes*r, n_axes*r)`` skew block matrix.
     """
     n_axes, d, r = params.U.shape
     assert P.shape[-1] == n_axes
@@ -222,12 +226,24 @@ def apply_bnrpe(x: jnp.ndarray, P: jnp.ndarray, params: BNRPEParams) -> jnp.ndar
 
 def apply_bnrpe_batch(X: jnp.ndarray, P: jnp.ndarray, params: BNRPEParams) -> jnp.ndarray:
     """
-    Convenience: X shape (L, d), P shape (L, n_axes).
+    Convenience wrapper for sequence-shaped tensors.
+
+    Args:
+      X: ``(L, d)`` token features.
+      P: ``(L, n_axes)`` positions.
+      params: BNRPE parameter bundle.
     """
     return apply_bnrpe(X, P, params)
 
 def attention_logits(Q: jnp.ndarray, K: jnp.ndarray) -> jnp.ndarray:
     """
-    Compute attention logits: (L,d) @ (L,d)^T -> (L,L)
+    Compute attention logits from rotated query/key matrices.
+
+    Args:
+      Q: Query matrix of shape ``(L, d)``.
+      K: Key matrix of shape ``(L, d)``.
+
+    Returns:
+      Matrix of shape ``(L, L)``.
     """
     return Q @ K.T

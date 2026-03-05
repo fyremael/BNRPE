@@ -1,7 +1,8 @@
-.PHONY: validate-all ci-validate test bench experiments fusion sweep gates
+.PHONY: validate-all ci-validate test bench experiments fusion sweep gates docs docs-refresh docs-serve docs-check
 
 PYTHON ?= python
 ARTIFACTS ?= artifacts
+DOCS_CONFIG ?= ../mkdocs.yml
 
 validate-all:
 	$(PYTHON) scripts/run_validation_suite.py --output-root $(ARTIFACTS) --mode full --with-sweep
@@ -26,3 +27,17 @@ sweep:
 
 gates:
 	$(PYTHON) scripts/build_gate_report.py --output-dir $(ARTIFACTS)/governance
+
+docs-refresh:
+	cd .. && $(PYTHON) bnrpe_jax/scripts/generate_api_docs.py --output-dir docs/api
+	cd .. && $(PYTHON) bnrpe_jax/scripts/generate_context_docs.py --repo-root . --output-path docs/context_snapshot.md
+
+docs:
+	$(PYTHON) scripts/build_docs.py --repo-root ..
+
+docs-serve: docs-refresh
+	$(PYTHON) -m mkdocs serve --config-file $(DOCS_CONFIG)
+
+docs-check:
+	$(PYTHON) scripts/build_docs.py --repo-root ..
+	git diff --exit-code ../docs/api ../docs/context_snapshot.md

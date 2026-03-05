@@ -1,0 +1,27 @@
+site_name: BNR-PE Documentation
+site_description: BNR-PE research implementation docs, API reference, and operating guidance.
+repo_url: https://github.com/fyremael/BNRPE
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: mkdocs
+
+nav:
+  - Home: index.md
+  - Motivation: motivation.md
+  - Theory To Code: theory_to_code.md
+  - Pedagogy: pedagogy.md
+  - API Reference:
+    - Overview: api/index.md
+    - bnrpe: api/bnrpe.md
+    - bnrpe.params: api/bnrpe_params.md
+    - bnrpe.rotors: api/bnrpe_rotors.md
+    - bnrpe.regularizers: api/bnrpe_regularizers.md
+  - Context Snapshot: context_snapshot.md
+  - Research State: research_dual_axis_state_2026-03-05.md
+  - Phase 2 Readiness: phase2_readiness.md
+  - CI vs Full Delta: ci_vs_full_delta.md
+  - Process: PROCESS.md
+  - Task Board: task_board.md
+  - Future Extensions: future_extensions.md

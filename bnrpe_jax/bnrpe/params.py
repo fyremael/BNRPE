@@ -1,12 +1,4 @@
-"""
-BNR-PE JAX reference implementation.
-
-Design goals:
-- Minimal dependencies: jax, jax.numpy
-- Structured low-rank skew generators per axis: A_a = U_a M_a U_a^T with M_a skew
-- Exactly-orthogonal rotor map via Cayley transform, applied efficiently using Woodbury
-- Optional differential rotor accumulation for 1D sequences
-"""
+"""Parameter structures and initialization utilities for BNR-PE."""
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Tuple
@@ -15,10 +7,19 @@ import jax
 import jax.numpy as jnp
 
 def skew(M: jnp.ndarray) -> jnp.ndarray:
+    """Return the skew-symmetric component of a square matrix."""
     return 0.5 * (M - M.T)
 
 @dataclass
 class BNRPEParams:
+    """Low-rank BNR-PE parameter bundle.
+
+    Attributes:
+      U: Per-axis low-rank basis of shape ``(n_axes, d, r)``.
+      M_raw: Per-axis unconstrained generator cores of shape ``(n_axes, r, r)``.
+      axis_scale: Per-axis scalar multipliers of shape ``(n_axes,)``.
+      alpha: Global coupling scalar (shape ``()``).
+    """
     # U: (n_axes, d, r)
     U: jnp.ndarray
     # M_raw: (n_axes, r, r)  (skewed on use)
@@ -37,7 +38,7 @@ def init_params(key: jax.random.KeyArray, d: int, r: int, n_axes: int,
       d: embedding dimension
       r: low-rank (per axis)
       n_axes: number of coordinate axes
-      alpha: coupling strength; alpha=0 should behave close to Abelian if U blocks are disjoint.
+      alpha: coupling strength. ``alpha=0`` produces an identity rotor.
 
     Returns:
       BNRPEParams

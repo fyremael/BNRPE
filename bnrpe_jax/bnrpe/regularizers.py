@@ -1,3 +1,5 @@
+"""Regularizers and budget terms for BNR-PE training experiments."""
+
 from __future__ import annotations
 import jax
 import jax.numpy as jnp
@@ -42,6 +44,13 @@ def commutator_budget_penalty(params: BNRPEParams, weight: float = 1.0) -> jnp.n
     Penalty: sum_{a<b} ||[A_a, A_b]||_F^2 for low-rank A_a = U_a skew(M_a) U_a^T.
 
     This is a practical surrogate for a commutator budget.
+
+    Args:
+      params: BNRPE parameter bundle.
+      weight: Scalar multiplier for the summed penalty.
+
+    Returns:
+      Scalar commutator penalty.
     """
     n_axes, d, r = params.U.shape
     As = [skew(params.M_raw[a]) * (params.alpha * params.axis_scale[a]) for a in range(n_axes)]

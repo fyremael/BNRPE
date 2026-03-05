@@ -17,6 +17,7 @@ pytest-cache-files-*/
 build/
 dist/
 *.egg-info/
+site/
 
 # Local artifacts
 artifacts/
