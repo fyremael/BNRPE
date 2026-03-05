@@ -56,3 +56,22 @@ Current comparison result:
 - Verdict: `REJECT`
 - Reason: low-`d` rank-8 improved, but overall rank medians regressed.
 - Evidence: `bnrpe_jax/artifacts_ci/research_compare_opt3/comparison.md`
+
+## Accepted Result (Level-Up)
+We evaluated an exact-path kernel variant that uses direct batched `(2r x 2r)` solves for the dual-axis case (replacing the Schur-based decomposition path in the same exact formulation).
+
+Matrix-vs-matrix result:
+- Verdict: `ACCEPT`
+- Evidence: `bnrpe_jax/artifacts_ci/research_compare_direct/comparison.md`
+
+Key deltas (candidate - baseline):
+- Rank-4 overall median overhead: `79.37% -> 6.14%` (`-73.23`)
+- Rank-8 overall median overhead: `215.50% -> 159.05%` (`-56.45`)
+- Rank-8 low-width medians:
+  - `d=64`: `573.35% -> 476.14%`
+  - `d=128`: `300.93% -> 181.24%`
+
+Operational impact:
+- CI gate returned to `GREEN` with mandatory dual-axis checks passing:
+  - `benchmark_rank_8_median_overhead_dual_axis_non_degenerate = 158.18%` (pass<=240)
+  - source: `bnrpe_jax/artifacts_ci/governance/phase2_gate_report.md`

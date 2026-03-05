@@ -16,16 +16,16 @@ Date: March 5, 2026
 
 ## What Changed This Iteration
 - Added exact single-axis fast-path execution in `apply_bnrpe` when one axis stream is zero across the batch.
-- Added exact two-axis batched solve path for non-degenerate two-axis inputs.
+- Switched exact two-axis path to direct batched `(2r x 2r)` solves after matrix-level comparison showed broad non-regressing wins over the Schur-form variant.
 - Stabilized fusion gate policy so speed-guard checks are applied only when full-path overhead exceeds rank-8 pass budget.
 - Made non-degenerate two-axis benchmarking mandatory in validation output and gate evaluation.
 - Added regression coverage validating one-axis and two-axis fast paths against the generic reference path.
 
 ## Remaining Risk
-1. Two-axis rank-8 overhead is still materially higher than single-axis in both CI and full runs.
+1. Two-axis rank-8 overhead is still higher than single-axis, especially in lower-width regimes.
 2. Experiment/fusion scripts still use predominantly single-axis coordinates and should be expanded to dual-axis profiles.
 
 ## Recommended Next Technical Work
-1. Tune two-axis rank-8 runtime (matrix assembly/solve path) to reduce overhead under `dual_axis_non_degenerate`.
-2. Extend experiment and fusion harnesses with non-degenerate two-axis coordinates as parallel reporting tracks.
-3. Tighten two-axis gate thresholds incrementally after two consecutive stable runs.
+1. Continue low-width (`d=64/128`) rank-8-focused runtime tuning with matrix comparison acceptance gating.
+2. Extend dual-axis experiments to multi-seed matrix runs and track worst-tail stability.
+3. Tighten two-axis gate thresholds incrementally after repeated stable GREEN runs.

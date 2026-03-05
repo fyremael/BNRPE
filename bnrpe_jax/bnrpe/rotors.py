@@ -40,8 +40,7 @@ def _apply_bnrpe_twoaxis_flat(
     M0_skew: jnp.ndarray,
     M1_skew: jnp.ndarray,
 ) -> jnp.ndarray:
-    # Exact two-axis Cayley path with batched block-Schur solves on (r x r) blocks.
-    # This is algebraically equivalent to a direct (2r x 2r) solve but cheaper at common ranks.
+    # Exact two-axis Cayley path with batched direct solve on (2r x 2r) blocks.
     r = U0.shape[1]
     c0 = 0.5 * coeff0
     c1 = 0.5 * coeff1
@@ -80,16 +79,12 @@ def _apply_bnrpe_twoaxis_flat(
     C = -c1[:, None, None] * b10[None, :, :]
     D = eye - c1[:, None, None] * b11[None, :, :]
 
-    # Solve A * Xa = rhs0 and A * Xb = B in batch.
-    rhs0_e = rhs0[..., None]
-    a_inv_rhs0 = jnp.linalg.solve(A, rhs0_e)[..., 0]
-    a_inv_B = jnp.linalg.solve(A, B)
-
-    schur = D - jnp.einsum("lij,ljk->lik", C, a_inv_B)
-    schur_rhs = rhs1 - jnp.einsum("lij,lj->li", C, a_inv_rhs0)
-    z1 = jnp.linalg.solve(schur, schur_rhs[..., None])[..., 0]
-    z0 = a_inv_rhs0 - jnp.einsum("lij,lj->li", a_inv_B, z1)
-    return y + jnp.concatenate([z0, z1], axis=1) @ Utcat
+    rhs = jnp.concatenate([rhs0, rhs1], axis=1)
+    top = jnp.concatenate([A, B], axis=2)
+    bot = jnp.concatenate([C, D], axis=2)
+    M = jnp.concatenate([top, bot], axis=1)
+    z = jnp.linalg.solve(M, rhs[..., None])[..., 0]
+    return y + z @ Utcat
 
 
 def _apply_cayley_lowrank(
