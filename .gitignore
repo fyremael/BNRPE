@@ -21,7 +21,9 @@ dist/
 # Local artifacts
 artifacts/
 artifacts_ci/
+artifacts_full/
 bnrpe_jax/artifacts_ci/
+bnrpe_jax/artifacts_full/
 *.log
 
 # OS/editor
