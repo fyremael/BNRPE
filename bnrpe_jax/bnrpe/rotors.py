@@ -40,43 +40,56 @@ def _apply_bnrpe_twoaxis_flat(
     M0_skew: jnp.ndarray,
     M1_skew: jnp.ndarray,
 ) -> jnp.ndarray:
-    # Exact two-axis Cayley path with batched (2r x 2r) solve.
+    # Exact two-axis Cayley path with batched block-Schur solves on (r x r) blocks.
+    # This is algebraically equivalent to a direct (2r x 2r) solve but cheaper at common ranks.
     r = U0.shape[1]
     c0 = 0.5 * coeff0
     c1 = 0.5 * coeff1
     c0_col = c0[:, None]
     c1_col = c1[:, None]
 
-    Ut0 = U0.T
-    Ut1 = U1.T
-    G00 = Ut0 @ U0
-    G01 = Ut0 @ U1
-    G10 = Ut1 @ U0
-    G11 = Ut1 @ U1
+    Ucat = jnp.concatenate([U0, U1], axis=1)  # (d, 2r)
+    Utcat = Ucat.T
+    Gram = Utcat @ Ucat
+    G00 = Gram[:r, :r]
+    G01 = Gram[:r, r:]
+    G10 = Gram[r:, :r]
+    G11 = Gram[r:, r:]
 
-    u0 = x_flat @ U0
-    u1 = x_flat @ U1
-    y = x_flat + ((u0 @ M0_skew.T) * c0_col) @ Ut0 + ((u1 @ M1_skew.T) * c1_col) @ Ut1
+    u = x_flat @ Ucat
+    u0 = u[:, :r]
+    u1 = u[:, r:]
+    corr0 = (u0 @ M0_skew.T) * c0_col
+    corr1 = (u1 @ M1_skew.T) * c1_col
+    y = x_flat + jnp.concatenate([corr0, corr1], axis=1) @ Utcat
 
-    v0 = y @ U0
-    v1 = y @ U1
+    v = y @ Ucat
+    v0 = v[:, :r]
+    v1 = v[:, r:]
     rhs0 = (v0 @ M0_skew.T) * c0_col
     rhs1 = (v1 @ M1_skew.T) * c1_col
-    rhs = jnp.concatenate([rhs0, rhs1], axis=1)
 
     eye = jnp.eye(r, dtype=x_flat.dtype)[None, :, :]
-    M00 = eye - c0[:, None, None] * (M0_skew @ G00)[None, :, :]
-    M01 = -c0[:, None, None] * (M0_skew @ G01)[None, :, :]
-    M10 = -c1[:, None, None] * (M1_skew @ G10)[None, :, :]
-    M11 = eye - c1[:, None, None] * (M1_skew @ G11)[None, :, :]
-    top = jnp.concatenate([M00, M01], axis=2)
-    bot = jnp.concatenate([M10, M11], axis=2)
-    M = jnp.concatenate([top, bot], axis=1)
+    b00 = M0_skew @ G00
+    b01 = M0_skew @ G01
+    b10 = M1_skew @ G10
+    b11 = M1_skew @ G11
 
-    z = jnp.linalg.solve(M, rhs[..., None])[..., 0]
-    z0 = z[:, :r]
-    z1 = z[:, r:]
-    return y + z0 @ Ut0 + z1 @ Ut1
+    A = eye - c0[:, None, None] * b00[None, :, :]
+    B = -c0[:, None, None] * b01[None, :, :]
+    C = -c1[:, None, None] * b10[None, :, :]
+    D = eye - c1[:, None, None] * b11[None, :, :]
+
+    # Solve A * Xa = rhs0 and A * Xb = B in batch.
+    rhs0_e = rhs0[..., None]
+    a_inv_rhs0 = jnp.linalg.solve(A, rhs0_e)[..., 0]
+    a_inv_B = jnp.linalg.solve(A, B)
+
+    schur = D - jnp.einsum("lij,ljk->lik", C, a_inv_B)
+    schur_rhs = rhs1 - jnp.einsum("lij,lj->li", C, a_inv_rhs0)
+    z1 = jnp.linalg.solve(schur, schur_rhs[..., None])[..., 0]
+    z0 = a_inv_rhs0 - jnp.einsum("lij,lj->li", a_inv_B, z1)
+    return y + jnp.concatenate([z0, z1], axis=1) @ Utcat
 
 
 def _apply_cayley_lowrank(

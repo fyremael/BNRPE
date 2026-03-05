@@ -26,9 +26,10 @@ def _local_tmp_dir():
         shutil.rmtree(path, ignore_errors=True)
 
 
-def _load_benchmark_module():
-    path = REPO_ROOT / "scripts" / "benchmark_overhead.py"
-    spec = importlib.util.spec_from_file_location("benchmark_overhead", path)
+def _load_script_module(script_name: str):
+    path = REPO_ROOT / "scripts" / script_name
+    module_name = Path(script_name).stem
+    spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Unable to load module from {path}")
     module = importlib.util.module_from_spec(spec)
@@ -189,7 +190,7 @@ def _run_gate_report(bench_csv: Path, exp_json: Path, fusion_csv: Path, out_dir:
 
 
 def test_build_positions_dual_axis_is_non_degenerate():
-    mod = _load_benchmark_module()
+    mod = _load_script_module("benchmark_overhead.py")
     pos, p = mod.build_positions(16, 2, "dual_axis_non_degenerate")
     assert pos.shape == (16,)
     assert p.shape == (16, 2)
@@ -198,10 +199,25 @@ def test_build_positions_dual_axis_is_non_degenerate():
 
 
 def test_build_positions_single_axis_zeros_other_axes():
-    mod = _load_benchmark_module()
+    mod = _load_script_module("benchmark_overhead.py")
     _, p = mod.build_positions(8, 3, "single_axis")
     assert p.shape == (8, 3)
     assert bool(jnp.all(p[:, 1:] == 0.0))
+
+
+def test_experiment_positions_dual_axis_is_non_degenerate():
+    mod = _load_script_module("run_experiment_tables.py")
+    p = mod.build_positions(16, "dual_axis_non_degenerate")
+    assert p.shape == (16, 2)
+    assert not bool(jnp.all(p[:, 1] == 0.0))
+
+
+def test_fusion_positions_dual_axis_is_non_degenerate():
+    mod = _load_script_module("prototype_fused_paths.py")
+    pos, p = mod.build_positions(16, "dual_axis_non_degenerate")
+    assert pos.shape == (16,)
+    assert p.shape == (16, 2)
+    assert not bool(jnp.all(p[:, 1] == 0.0))
 
 
 def test_gate_report_fails_when_required_dual_axis_profile_missing():

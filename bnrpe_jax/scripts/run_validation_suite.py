@@ -16,6 +16,11 @@ def main() -> None:
     parser.add_argument("--output-root", default="artifacts", help="Root output directory for generated artifacts.")
     parser.add_argument("--mode", choices=["full", "ci"], default="full")
     parser.add_argument("--with-sweep", action="store_true", help="Run hybrid sweep and recommendation stage.")
+    parser.add_argument(
+        "--with-dual-axis-reports",
+        action="store_true",
+        help="Run supplemental dual-axis experiment/fusion reports (non-gating).",
+    )
     parser.add_argument("--sweep-seeds", default="0,1")
     args = parser.parse_args()
 
@@ -41,6 +46,15 @@ def main() -> None:
     run(bench_cmd, cwd=repo_root)
     run(exp_cmd, cwd=repo_root)
     run(fusion_cmd, cwd=repo_root)
+
+    if args.with_dual_axis_reports:
+        exp_dual_cmd = [sys.executable, "scripts/run_experiment_tables.py", "--position-profile", "dual_axis_non_degenerate", "--output-dir", str(output_root / "experiments_dual_axis")]
+        fusion_dual_cmd = [sys.executable, "scripts/prototype_fused_paths.py", "--position-profile", "dual_axis_non_degenerate", "--output-dir", str(output_root / "fusion_dual_axis")]
+        if args.mode == "ci":
+            exp_dual_cmd += ["--length", "256", "--dim", "128", "--ranks", "0,4,8", "--alphas", "0.0,0.2", "--seeds", "0,1"]
+            fusion_dual_cmd += ["--length", "256", "--dim", "128", "--rank", "8", "--hybrid-rank", "4", "--iters", "15"]
+        run(exp_dual_cmd, cwd=repo_root)
+        run(fusion_dual_cmd, cwd=repo_root)
 
     sweep_csv = ""
     if args.with_sweep:

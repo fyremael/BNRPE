@@ -45,6 +45,16 @@ def make_hybrid_params(full: BNRPEParams, rank_corr: int, alpha_scale: float) ->
     )
 
 
+def build_positions(length: int, profile: str) -> tuple[jnp.ndarray, jnp.ndarray]:
+    pos = jnp.arange(length, dtype=jnp.float32)
+    if profile == "single_axis":
+        return pos, jnp.stack([pos, jnp.zeros_like(pos)], axis=-1)
+    if profile == "dual_axis_non_degenerate":
+        axis1 = 0.5 * pos + 1.0 + 0.25 * jnp.sin(pos * 0.03125)
+        return pos, jnp.stack([pos, axis1], axis=-1)
+    raise ValueError(f"Unknown position profile: {profile}")
+
+
 def apply_cayley_neumann1_batch(
     X: jnp.ndarray, P: jnp.ndarray, params: BNRPEParams, correction_scale: float
 ) -> jnp.ndarray:
@@ -84,6 +94,12 @@ def main() -> None:
     parser.add_argument("--alpha", type=float, default=0.2, help="Full BNR alpha.")
     parser.add_argument("--hybrid-alpha-scale", type=float, default=0.5, help="Hybrid correction alpha multiplier.")
     parser.add_argument("--single-pass-scale", type=float, default=0.001, help="Damping for single-pass correction.")
+    parser.add_argument(
+        "--position-profile",
+        choices=["single_axis", "dual_axis_non_degenerate"],
+        default="single_axis",
+        help="Coordinate profile used to build P.",
+    )
     parser.add_argument("--iters", type=int, default=30)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--output-dir", default="artifacts/fusion")
@@ -96,8 +112,7 @@ def main() -> None:
     q_key, k_key = jax.random.split(key)
     Q = jax.random.normal(q_key, (args.length, args.dim))
     K = jax.random.normal(k_key, (args.length, args.dim))
-    pos = jnp.arange(args.length, dtype=jnp.float32)
-    P = jnp.stack([pos, jnp.zeros_like(pos)], axis=-1)
+    pos, P = build_positions(args.length, args.position_profile)
 
     full_params = init_params(
         jax.random.PRNGKey(10_000 + args.seed),
@@ -156,6 +171,7 @@ def main() -> None:
     rows = [
         {
             "mode": "full_prerotate_bnr",
+            "position_profile": args.position_profile,
             "steady_s": full_time,
             "tokens_per_s": args.length / full_time,
             "rel_mae_to_full": 0.0,
@@ -163,6 +179,7 @@ def main() -> None:
         },
         {
             "mode": "rope_core",
+            "position_profile": args.position_profile,
             "steady_s": rope_time,
             "tokens_per_s": args.length / rope_time,
             "rel_mae_to_full": rel_mae(rope, full),
@@ -170,6 +187,7 @@ def main() -> None:
         },
         {
             "mode": "hybrid_two_pass_rope_plus_lowrank_corr",
+            "position_profile": args.position_profile,
             "steady_s": hybrid_time,
             "tokens_per_s": args.length / hybrid_time,
             "rel_mae_to_full": rel_mae(hybrid, full),
@@ -177,6 +195,7 @@ def main() -> None:
         },
         {
             "mode": "hybrid_single_pass_neumann1",
+            "position_profile": args.position_profile,
             "steady_s": hybrid_single_time,
             "tokens_per_s": args.length / hybrid_single_time,
             "rel_mae_to_full": rel_mae(hybrid_single, full),
@@ -196,6 +215,7 @@ def main() -> None:
             "hybrid_alpha_scale": args.hybrid_alpha_scale,
             "iters": args.iters,
             "seed": args.seed,
+            "position_profile": args.position_profile,
         },
         "results": rows,
     }

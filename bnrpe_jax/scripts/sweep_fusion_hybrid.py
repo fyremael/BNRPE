@@ -48,6 +48,12 @@ def main() -> None:
     parser.add_argument("--dim", type=int, default=256)
     parser.add_argument("--rank", type=int, default=8)
     parser.add_argument("--alpha", type=float, default=0.2)
+    parser.add_argument(
+        "--position-profile",
+        choices=["single_axis", "dual_axis_non_degenerate"],
+        default="single_axis",
+        help="Coordinate profile forwarded to prototype_fused_paths.",
+    )
     parser.add_argument("--iters", type=int, default=20)
     parser.add_argument("--output-dir", default="artifacts/fusion_sweep")
     parser.add_argument("--max-rel-mae-mean", type=float, default=1.10)
@@ -83,6 +89,8 @@ def main() -> None:
                     str(hr),
                     "--alpha",
                     str(args.alpha),
+                    "--position-profile",
+                    args.position_profile,
                     "--single-pass-scale",
                     str(sc),
                     "--iters",
@@ -105,6 +113,7 @@ def main() -> None:
                                     "hybrid_rank": hr,
                                     "single_pass_scale": sc,
                                     "seed": seed,
+                                    "position_profile": args.position_profile,
                                     "steady_s": float(r["steady_s"]),
                                     "tokens_per_s": float(r["tokens_per_s"]),
                                     "rel_mae_to_full": float(r["rel_mae_to_full"]),

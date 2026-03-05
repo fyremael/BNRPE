@@ -18,6 +18,16 @@ from bnrpe.regularizers import commutator_budget_penalty
 from bnrpe.rotors import apply_bnrpe_batch, attention_logits
 
 
+def build_positions(length: int, profile: str) -> jnp.ndarray:
+    t = jnp.arange(length, dtype=jnp.float32)
+    if profile == "single_axis":
+        return jnp.stack([t, jnp.zeros_like(t)], axis=-1)
+    if profile == "dual_axis_non_degenerate":
+        axis1 = 0.5 * t + 1.0 + 0.25 * jnp.sin(t * 0.03125)
+        return jnp.stack([t, axis1], axis=-1)
+    raise ValueError(f"Unknown position profile: {profile}")
+
+
 def drift_metric(logits: jnp.ndarray) -> float:
     # If logits are pure Delta-only, each diagonal should have near-constant values.
     L = logits.shape[0]
@@ -40,6 +50,12 @@ def main() -> None:
     parser.add_argument("--ranks", default="0,4,8,16", help="Comma-separated ranks; 0 is identity baseline.")
     parser.add_argument("--alphas", default="0.0,0.1,0.2,0.4", help="Comma-separated alpha values.")
     parser.add_argument("--seeds", default="0,1,2", help="Comma-separated random seeds.")
+    parser.add_argument(
+        "--position-profile",
+        choices=["single_axis", "dual_axis_non_degenerate"],
+        default="single_axis",
+        help="Coordinate profile used to build P.",
+    )
     parser.add_argument("--output-dir", default="artifacts/experiments")
     args = parser.parse_args()
 
@@ -50,8 +66,7 @@ def main() -> None:
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    t = jnp.arange(args.length, dtype=jnp.float32)
-    P = jnp.stack([t, jnp.zeros_like(t)], axis=-1)
+    P = build_positions(args.length, args.position_profile)
 
     rows = []
     for rank in ranks:
@@ -95,6 +110,7 @@ def main() -> None:
                 {
                     "rank": rank,
                     "alpha": alpha,
+                    "position_profile": args.position_profile,
                     "norm_err_mean": float(sum(norm_errs) / len(norm_errs)),
                     "drift_mean": float(sum(drifts) / len(drifts)),
                     "comm_penalty_mean": float(sum(comms) / len(comms)),
@@ -110,6 +126,7 @@ def main() -> None:
             "ranks": ranks,
             "alphas": alphas,
             "seeds": seeds,
+            "position_profile": args.position_profile,
         },
         "results": rows,
     }
@@ -121,11 +138,11 @@ def main() -> None:
     summary_md = out_dir / "summary.md"
     with summary_md.open("w", encoding="utf-8") as f:
         f.write("# BNR-PE Experiment Summary\n\n")
-        f.write("| rank | alpha | norm_err_mean | drift_mean | comm_penalty_mean |\n")
-        f.write("|---:|---:|---:|---:|---:|\n")
+        f.write("| position_profile | rank | alpha | norm_err_mean | drift_mean | comm_penalty_mean |\n")
+        f.write("|---|---:|---:|---:|---:|---:|\n")
         for row in rows:
             f.write(
-                f"| {row['rank']} | {row['alpha']:.2f} | {row['norm_err_mean']:.6e} | "
+                f"| {row['position_profile']} | {row['rank']} | {row['alpha']:.2f} | {row['norm_err_mean']:.6e} | "
                 f"{row['drift_mean']:.6e} | {row['comm_penalty_mean']:.6e} |\n"
             )
 
