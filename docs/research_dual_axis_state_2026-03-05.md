@@ -75,3 +75,30 @@ Operational impact:
 - CI gate returned to `GREEN` with mandatory dual-axis checks passing:
   - `benchmark_rank_8_median_overhead_dual_axis_non_degenerate = 158.18%` (pass<=240)
   - source: `bnrpe_jax/artifacts_ci/governance/phase2_gate_report.md`
+
+## Multi-Seed Stress Test (seeds 0,1,2)
+Command:
+
+```bash
+python bnrpe_jax/scripts/research_benchmark_matrix.py --output-dir bnrpe_jax/artifacts_ci/research_matrix_dual_axis_direct_s012 --position-profile dual_axis_non_degenerate --lengths 128,256,512,1024 --dims 64,128,256,512 --ranks 4,8 --alphas 0.2 --iters 30 --seeds 0,1,2
+```
+
+Results (from `summary.md`):
+- Rank-4 overall median overhead: `9.53%`
+- Rank-8 overall median overhead: `164.13%`
+- Rank-8 by width:
+  - `d=64`: median `469.89%`
+  - `d=128`: median `226.65%`
+  - `d=256`: median `94.34%`
+  - `d=512`: median `53.12%`
+
+Baseline-vs-multi-seed comparison:
+
+```bash
+python bnrpe_jax/scripts/compare_research_matrices.py --baseline-json bnrpe_jax/artifacts_ci/research_matrix_dual_axis/summary.json --candidate-json bnrpe_jax/artifacts_ci/research_matrix_dual_axis_direct_s012/summary.json --output-dir bnrpe_jax/artifacts_ci/research_compare_direct_s012
+```
+
+- Verdict: `ACCEPT`
+- Rank-4 overall median delta: `-69.84`
+- Rank-8 overall median delta: `-51.37`
+- low-`d` rank-8 check still improved vs baseline.
