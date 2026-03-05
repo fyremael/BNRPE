@@ -32,6 +32,7 @@ Individual commands:
 python scripts/benchmark_overhead.py --output-dir artifacts/benchmarks
 python scripts/run_experiment_tables.py --output-dir artifacts/experiments
 python scripts/prototype_fused_paths.py --output-dir artifacts/fusion
+python scripts/sweep_fusion_hybrid.py --output-dir artifacts/fusion_sweep
 ```
 
 ## Key ideas
