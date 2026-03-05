@@ -1,0 +1,37 @@
+name: Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  ci-validation:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bnrpe_jax
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pytest
+
+      - name: Run CI validation suite
+        run: python scripts/run_validation_suite.py --mode ci --output-root artifacts_ci
+
+      - name: Upload CI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bnrpe-ci-artifacts
+          path: bnrpe_jax/artifacts_ci
