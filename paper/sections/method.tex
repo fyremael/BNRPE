@@ -1,0 +1,39 @@
+\subsection{Rotor positional encodings}
+Let positions be $P\in\R^n$.
+We define a skew-symmetric generator $G(P)\in\so(d)$ and the rotor (orthogonal map)
+\begin{equation}
+  R(P) \;\coloneqq\; \exp\!\left(-\tfrac12 G(P)\right)\in \SO(d).
+\end{equation}
+Given an input vector $x\in\R^d$ (query, key, or value), we apply the positional action $x \mapsto R(P)\,x$.
+
+\subsection{BNR-PE generators with commutator budgets}
+We use a linear coordinate map
+\begin{equation}
+  G(P) \;=\; \sum_{a=1}^{n} P_a\,A_a, \qquad A_a \in \so(d).
+\end{equation}
+Non-commutativity arises when $\comm{A_a}{A_b}\neq 0$.
+We introduce an explicit \emph{commutator budget} $\kappa$ by constraining or regularizing
+\begin{equation}
+  \norm{\comm{A_a}{A_b}} \;\le\; \kappa \quad \forall a<b,
+\end{equation}
+so that the model interpolates between Abelian (RoPE-like) and non-Abelian (LieRE-like) regimes.
+
+\subsection{Structured low-rank parameterization}
+To enable efficient application, we parameterize each axis generator as a low-rank skew operator:
+\begin{equation}
+  A_a \;=\; U_a\,M_a\,U_a^\top,\qquad U_a\in\R^{d\times r}, \quad M_a^\top=-M_a \in \R^{r\times r},\quad r\ll d.
+\end{equation}
+This yields rank at most $r$ per axis and supports fast application via Woodbury identities.
+
+\subsection{Cayley--Woodbury rotor map}
+Instead of a dense exponential, we use the Cayley transform
+\begin{equation}
+  \Cay(S) \;\coloneqq\; (I-\tfrac12 S)^{-1}(I+\tfrac12 S),
+  \qquad S^\top=-S,
+\end{equation}
+which is exactly orthogonal for skew $S$ and admits low-rank fast application when $S=UCU^\top$.
+We define
+\begin{equation}
+  R(P) \;\coloneqq\; \Cay\!\big(G(P)\big),
+\end{equation}
+and study approximation error relative to $\exp(-\tfrac12 G(P))$ in Section~\ref{sec:theory}.

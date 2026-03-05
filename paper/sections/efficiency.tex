@@ -1,0 +1,22 @@
+\label{sec:efficiency}
+\subsection{Low-rank Cayley application via Woodbury}
+Let $S=UCU^\top$ with $C^\top=-C$ and $U\in\R^{d\times r}$.
+To apply $x\mapsto \Cay(S)x$, we compute
+\begin{equation}
+  y \;=\; (I+\tfrac12 S)x \;=\; x + \tfrac12 U C (U^\top x),
+\end{equation}
+then solve $(I-\tfrac12 S)\,z = y$.
+Using $z=y+U\alpha$ and multiplying by $(I-\tfrac12 S)$ gives a small $r\times r$ linear system for $\alpha$:
+\begin{equation}
+  \Big(I_r - \tfrac12 C (U^\top U)\Big)\alpha \;=\; \tfrac12 C (U^\top y),
+\end{equation}
+which we solve in $O(r^3)$, yielding overall $O(dr + r^3)$ cost per application.
+
+\subsection{Differential rotor accumulation (DRA)}
+For 1D positions with unit step $\Delta$, define a step generator $G(\Delta)$ and step rotor $R_\Delta=\Cay(G(\Delta))$.
+Accumulate rotors as $R_{t+1}=R_\Delta R_t$ to avoid per-token generator evaluation and amortize computation.
+
+\subsection{Kernel fusion}
+We outline two integration modes:
+(i) pre-rotate $Q,K$ before fused attention, and (ii) hybrid fusion where an Abelian core uses RoPE-like relative fusion and a low-rank coupling term is applied as a correction.
+We provide JAX reference code and Triton pseudocode in the repository.

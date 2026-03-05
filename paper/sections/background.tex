@@ -1,0 +1,12 @@
+\subsection{RoPE as commuting rotors}
+RoPE partitions the embedding into $d/2$ orthogonal $2$-planes and applies independent rotations with position-dependent phases.
+This yields the key identity $\widetilde{R(i)} R(j) = R(j-i)$, so attention scores depend only on relative offsets.
+
+\subsection{LieRE as learned Lie algebra actions}
+LieRE generalizes rotary encodings by learning skew-symmetric generators from multi-dimensional coordinates and exponentiating them to rotations.
+The resulting rotations are typically non-commuting, producing richer structure at the cost of exponentiation overhead and loss of exact relative-only behavior.
+
+\subsection{Geometric algebra preliminaries}
+Let $V\cong\R^d$. The Clifford algebra $\Cl(V)$ provides a product extending the inner product on $V$.
+Bivectors correspond to oriented $2$-planes and generate rotations (rotors) via exponentiation.
+In this paper we use geometric algebra primarily as a unifying and constructive language; implementation reduces to structured skew-symmetric operators and orthogonal transforms.

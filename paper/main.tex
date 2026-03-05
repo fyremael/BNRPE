@@ -1,0 +1,43 @@
+\documentclass[11pt]{article}
+
+\input{macros}
+
+\title{\textbf{BNR-PE: Budgeted Non-Abelian Rotor Positional Encodings via Geometric Algebra}}
+\author{Anonymous Authors}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Rotary positional encodings (RoPE) implement positional structure via commuting 2D rotations, yielding exact relative-offset equivariance and excellent long-context extrapolation but limited cross-dimensional coupling. Lie relative encodings (LieRE) generalize RoPE by learning dense skew-symmetric generators and exponentiating them, increasing expressivity for multi-dimensional domains at the cost of heavier computation and loss of exact relative structure. We introduce \emph{Budgeted Non-Abelian Rotor Positional Encodings (BNR-PE)}: a geometric-algebra formulation that treats skew generators as bivectors and constructs rotors with \emph{structured non-commutativity} controlled by an explicit \emph{commutator budget}. BNR-PE interpolates between RoPE (Abelian) and LieRE (non-Abelian) while preserving norm (hypersphere) compatibility and enabling efficient implementations via (i) low-rank and block-sparse bivector parameterizations, (ii) a Cayley--Woodbury rotor map that avoids dense matrix exponentials while remaining exactly orthogonal, and (iii) differential rotor accumulation for long sequences and grids. We provide bounds quantifying deviation from pure relative-offset behavior under bounded commutators and validate BNR-PE on text, 2D/3D, and time--frequency tasks with single-digit overhead over FlashAttention-style baselines.
+\end{abstract}
+
+\section{Introduction}
+\input{sections/introduction}
+
+\section{Background}
+\input{sections/background}
+
+\section{BNR-PE}
+\input{sections/method}
+
+\section{Theory}
+\input{sections/theory}
+
+\section{Efficient Implementation}
+\input{sections/efficiency}
+
+\section{Experiments}
+\input{sections/experiments}
+
+\section{Discussion}
+\input{sections/discussion}
+
+\bibliographystyle{plain}
+\bibliography{bnrpe}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

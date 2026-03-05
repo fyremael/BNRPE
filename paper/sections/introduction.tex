@@ -1,0 +1,16 @@
+We seek positional encodings that (i) preserve RoPE's strong long-context extrapolation, (ii) generalize cleanly to multi-dimensional coordinates (images, video, time--frequency), and (iii) admit kernel-efficient implementations compatible with modern fused attention backends.
+RoPE achieves (i) by restricting to commuting 2D rotations, but sacrifices cross-dimensional coupling.
+LieRE increases expressivity via learned dense rotations but introduces additional compute and degrades exact relative-offset structure.
+
+\paragraph{Thesis.}
+We propose \emph{Budgeted Non-Abelian Rotor Positional Encodings (BNR-PE)}: a rotor-based scheme whose non-commutativity is \emph{structured} and \emph{budgeted} to balance expressivity and extrapolation.
+Our primary technical device is a low-rank / block-sparse generator family and an exactly-orthogonal \emph{Cayley--Woodbury} rotor map that avoids dense matrix exponentials while retaining norm preservation.
+
+\paragraph{Contributions.}
+\begin{enumerate}
+  \item A geometric-algebra (Clifford) view that treats skew generators as bivectors and unifies RoPE and LieRE in a single rotor framework.
+  \item A commutator-budgeted generator class that interpolates between Abelian (RoPE) and non-Abelian (LieRE-like) behavior.
+  \item Efficient rotor application via Cayley transforms plus Woodbury identities for low-rank generators, enabling near-RoPE overhead.
+  \item A theory section establishing exact $\Delta$-only structure in the Abelian case and quantitative deviation bounds under bounded commutators.
+  \item Empirical results and ablations across text, 2D/3D, and time--frequency domains.
+\end{enumerate}

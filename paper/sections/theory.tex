@@ -1,0 +1,49 @@
+\label{sec:theory}
+\subsection{Exact relative-offset structure in the Abelian case}
+\begin{theorem}[Exact $\Delta$-only structure]
+If $\comm{A_a}{A_b}=0$ for all $a,b$, then for all positions $P,Q\in\R^n$,
+\begin{equation}
+  R(P)^{-1}R(Q) \;=\; R(Q-P),
+\end{equation}
+and consequently attention logits constructed from dot products of rotated queries and keys depend only on $(Q-P)$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+When generators commute, $\exp(\cdot)$ and $\Cay(\cdot)$ both respect additive composition on the commuting subalgebra.
+Thus $G(Q)-G(P)=G(Q-P)$ and the group product reduces to relative differences.
+A full proof unrolls the commuting functional calculus and the identity $\Cay(S)^{-1}=\Cay(-S)$.
+\end{proof}
+
+\subsection{Deviation bounds under bounded commutators}
+Let $X=-\tfrac12 G(P)$ and $Y=-\tfrac12 G(Q)$.
+The Baker--Campbell--Hausdorff (BCH) formula gives
+\begin{equation}
+  \log\!\big(\exp(-X)\exp(Y)\big)
+  \;=\;
+  (Y-X) + \tfrac12\comm{Y}{X} + \tfrac1{12}\comm{Y}{\comm{Y}{X}} + \tfrac1{12}\comm{X}{\comm{X}{Y}} + \cdots.
+\end{equation}
+We bound $\norm{\comm{X}{Y}}$ in terms of the commutator budget.
+\begin{lemma}[Commutator magnitude bound]
+Assume $\norm{\comm{A_a}{A_b}}\le \kappa$ for all $a<b$.
+Then
+\begin{equation}
+  \norm{\comm{X}{Y}}
+  \;\le\;
+  \frac{\kappa}{4}\sum_{a<b} \left| P_aQ_b - P_bQ_a \right|.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+By bilinearity,
+$\comm{G(P)}{G(Q)}=\sum_{a,b}P_aQ_b\comm{A_a}{A_b}$.
+Skew symmetry implies cancellation of diagonal terms; grouping $a<b$ yields coefficients $(P_aQ_b-P_bQ_a)$.
+Apply the triangle inequality and the budget bound.
+\end{proof}
+
+\paragraph{Remark.}
+The wedge-like term $P_aQ_b-P_bQ_a$ measures oriented ``area'' spanned by $(P,Q)$ in the $(a,b)$ coordinate plane.
+Thus deviation from pure relative structure is governed jointly by coordinate geometry and generator curvature (commutator size).
+
+\subsection{Cayley approximation error}
+We characterize $\Cay(S)$ as a rational approximation to $\exp(S)$ and provide error bounds when $\norm{S}$ is small.
+(We include a complete statement and proof in Appendix~\ref{app:cayley}.)

@@ -1,0 +1,19 @@
+\subsection{Benchmarks}
+We evaluate on three settings:
+\begin{enumerate}
+  \item \textbf{Long-context text:} probe $\Delta$-extrapolation and ``needle-in-haystack'' retrieval performance.
+  \item \textbf{2D/3D:} vision/video tasks where axis coupling is important.
+  \item \textbf{Time--frequency audio:} spectrogram transformers where coupling time and frequency improves structure.
+\end{enumerate}
+
+\subsection{Ablations}
+We sweep:
+(i) rank $r\in\{0,4,8,16\}$ (with $r=0$ reducing to an Abelian baseline),
+(ii) commutator budget strength (hard constraint or penalty),
+(iii) Cayley vs exponential (when feasible),
+(iv) differential rotor accumulation on/off,
+(v) runtime overhead vs FlashAttention-style baselines.
+
+\subsection{Diagnostics}
+We log:
+tokens/s, achieved TFLOPs, attention-kernel time, norm preservation error, and a \emph{drift diagnostic} measuring deviation from $\Delta$-only attention structure under increasing $\kappa$.
