@@ -24,4 +24,5 @@ nav:
   - CI vs Full Delta: ci_vs_full_delta.md
   - Process: PROCESS.md
   - Task Board: task_board.md
+  - Docs Changelog: changelog.md
   - Future Extensions: future_extensions.md

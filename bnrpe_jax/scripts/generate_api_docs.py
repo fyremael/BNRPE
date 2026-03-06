@@ -7,7 +7,6 @@ import importlib
 import inspect
 import sys
 from dataclasses import fields, is_dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -103,13 +102,10 @@ def _write_module_page(module_name: str, destination: Path) -> None:
 
 
 def _write_index(destination: Path) -> None:
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     lines = [
         "# API Reference",
         "",
         "This section is auto-generated from the Python package source.",
-        "",
-        f"_Last generated: {now}_",
         "",
         "## Modules",
         "",

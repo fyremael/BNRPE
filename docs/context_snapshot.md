@@ -2,8 +2,6 @@
 
 This page is auto-generated from tracked benchmark and governance artifacts.
 
-_Last generated: 2026-03-05 23:52:42 UTC_
-
 ## Research Matrix Summaries
 
 | Source | Rank-4 Median Overhead | Rank-8 Median Overhead |

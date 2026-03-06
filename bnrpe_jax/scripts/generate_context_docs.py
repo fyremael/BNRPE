@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -71,13 +70,10 @@ def _extract_gate_state(payload: dict[str, Any]) -> str:
 
 
 def generate(repo_root: Path, output_path: Path) -> None:
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     lines = [
         "# Context Snapshot",
         "",
         "This page is auto-generated from tracked benchmark and governance artifacts.",
-        "",
-        f"_Last generated: {now}_",
         "",
         "## Research Matrix Summaries",
         "",
